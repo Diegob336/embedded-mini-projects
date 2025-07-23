@@ -35,32 +35,33 @@ void task2(void *paramater){
 		if(xQueueReceive(uart_queue, &event, portMAX_DELAY)){
 			switch(event.type) {
 				case UART_DATA: {
-					uint32_t length = uart_read_bytes(UART_NUM_0, data, event.size, portMAX_DELAY);
-					if (length > 0) {
-						ESP_LOGI("UART", "Received %d bytes", length);
-						for (int i = 0; i < length; i ++){
-							if(data[i] == '\n' || data[i] == '\r'){
-								input_buffer[input_buffer_index] = '\0';
-								int new_delay = atoi((char *)input_buffer);
-                                                                led_delay_ms = new_delay;
+					
+									uint32_t length = uart_read_bytes(UART_NUM_0, data, event.size, portMAX_DELAY);
+									if (length > 0) {
+										ESP_LOGI("UART", "Received %d bytes", length);
+										for (int i = 0; i < length; i ++){
+											if(data[i] == '\n' || data[i] == '\r'){
+												input_buffer[input_buffer_index] = '\0';
+												int new_delay = atoi((char *)input_buffer);
+												led_delay_ms = new_delay;
 
-								input_buffer_index = 0;
+												input_buffer_index = 0;
 
-								ESP_LOGI("UART", "updated LED delay to %d ms\n", new_delay);					
-							} 
-							else if (input_buffer_index < sizeof(input_buffer) - 1) {
-								input_buffer[input_buffer_index] = data[i];
-								input_buffer_index++;
-							}
-						}
-									
-					} else {
-						ESP_LOGI("UART", "No bytes received");
-					}
-					break;
-				}
+												ESP_LOGI("UART", "updated LED delay to %d ms\n", new_delay);					
+											} 
+											else if (input_buffer_index < sizeof(input_buffer) - 1) {
+												input_buffer[input_buffer_index] = data[i];
+												input_buffer_index++;
+											}
+										}
+
+									} else {
+										ESP_LOGI("UART", "No bytes received");
+									}
+									break;
+								}
 				default: 
-					break;
+								break;
 			}
 		}	
 	}
@@ -73,7 +74,7 @@ void app_main(void)
 
 	const uart_port_t uart_num = UART_NUM_0;
 
-	 ESP_ERROR_CHECK(uart_driver_install(uart_num, 1024, 1024, 10, &uart_queue,0));
+	ESP_ERROR_CHECK(uart_driver_install(uart_num, 1024, 1024, 10, &uart_queue,0));
 	uart_config_t uart_config = {
 		.baud_rate = 115200,
 		.data_bits = UART_DATA_8_BITS,
@@ -83,11 +84,11 @@ void app_main(void)
 		.rx_flow_ctrl_thresh = 122,
 	};
 
-	 ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
+	ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
 
 	gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 
-	 ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, 1, 3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+	ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, 1, 3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
 	xTaskCreatePinnedToCore(&task1, "blinkLed", 1024, NULL, 1, &task1Handle, 1);
 

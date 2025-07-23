@@ -1,0 +1,48 @@
+# Build output folders
+build/
+sdkconfig
+sdkconfig.old
+
+# CMake build files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Compiled object files
+*.o
+*.obj
+
+# Executables and firmware binaries
+*.elf
+*.bin
+*.hex
+*.map
+
+# ESP-IDF generated files
+components/**/build/
+.esp-idf/
+
+# VS Code settings and extensions
+.vscode/
+*.code-workspace
+
+# Eclipse/IDEA/CLion etc.
+*.project
+*.cproject
+*.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Misc
+*.swp
+*.swo
+*.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
