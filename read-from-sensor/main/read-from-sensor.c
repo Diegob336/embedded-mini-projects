@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "driver/i2c_master.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 
 #define MPU_ADDR         	0x68
 #define WHO_AM_I_REG     	0x75
@@ -9,6 +10,9 @@
 #define CONFIG_REG       	0x1A
 #define GYRO_CONFIG_REG  	0X1B
 #define ACCEL_CONFIG_REG 	0X1C
+
+#define LSB_PER_G               16384.0
+#define LSB_PER_DEG             131.0
 
 void sendData(i2c_master_dev_handle_t *dev_handle, uint8_t addr, uint8_t val){
 	
@@ -73,20 +77,28 @@ void app_main(void) {
 		ESP_ERROR_CHECK(i2c_master_transmit_receive(dev_handle, &reg_addr, 1, sensor_data, 14, -1));
 
 		// Parse the raw values
-		int16_t accel_x = (sensor_data[0] << 8) | sensor_data[1];
-		int16_t accel_y = (sensor_data[2] << 8) | sensor_data[3];
-		int16_t accel_z = (sensor_data[4] << 8) | sensor_data[5];
+		int16_t raw_accel_x = (sensor_data[0] << 8) | sensor_data[1];
+		int16_t raw_accel_y = (sensor_data[2] << 8) | sensor_data[3];
+		int16_t raw_accel_z = (sensor_data[4] << 8) | sensor_data[5];
 
 		int16_t temp_raw = (sensor_data[6] << 8) | sensor_data[7];
 
-		int16_t gyro_x = (sensor_data[8]  << 8) | sensor_data[9];
-		int16_t gyro_y = (sensor_data[10] << 8) | sensor_data[11];
-		int16_t gyro_z = (sensor_data[12] << 8) | sensor_data[13];
+		int16_t raw_gyro_x = (sensor_data[8]  << 8) | sensor_data[9];
+		int16_t raw_gyro_y = (sensor_data[10] << 8) | sensor_data[11];
+		int16_t raw_gyro_z = (sensor_data[12] << 8) | sensor_data[13];
 
-		ESP_LOGI("MPU6050", "Accel: X=%d, Y=%d, Z=%d", accel_x, accel_y, accel_z);
-		ESP_LOGI("MPU6050", "Gyro:  X=%d, Y=%d, Z=%d", gyro_x, gyro_y, gyro_z);
+		float g_force_x = (float)raw_accel_x / LSB_PER_G;
+		float g_force_y = (float)raw_accel_y / LSB_PER_G;
+		float g_force_z = (float)raw_accel_z / LSB_PER_G;
 
+		float ang_velocity_x = (float)raw_gyro_x / LSB_PER_DEG;
+		float ang_velocity_y = (float)raw_gyro_y / LSB_PER_DEG;
+		float ang_velocity_z = (float)raw_gyro_z / LSB_PER_DEG;
 
+		ESP_LOGI("MPU6050", "Accel: X=%f, Y=%f, Z=%f", g_force_x, g_force_y, g_force_z);
+		ESP_LOGI("MPU6050", "Gyro:  X=%f, Y=%f, Z=%f", ang_velocity_x, ang_velocity_y, ang_velocity_z);
+
+		
 	}
 }
 
