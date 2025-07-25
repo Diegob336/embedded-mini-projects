@@ -2,9 +2,20 @@
 #include "driver/i2c_master.h"
 #include "esp_log.h"
 
-#define MPU_ADDR         0x68
-#define WHO_AM_I_REG     0x75
-#define PWR_MGMT_1_REG   0x6B
+#define MPU_ADDR         	0x68
+#define WHO_AM_I_REG     	0x75
+#define PWR_MGMT_1_REG   	0x6B
+#define SMPLRT_DIV_REG   	0X19
+#define CONFIG_REG       	0x1A
+#define GYRO_CONFIG_REG  	0X1B
+#define ACCEL_CONFIG_REG 	0X1C
+
+void sendData(i2c_master_dev_handle_t *dev_handle, uint8_t addr, uint8_t val){
+	
+	uint8_t data[] = { addr, val };
+	ESP_ERROR_CHECK(i2c_master_transmit(*dev_handle, data, sizeof(data), -1));
+}
+
 
 
 void app_main(void) {
@@ -40,6 +51,42 @@ void app_main(void) {
 	uint8_t Who_am_i_reg = WHO_AM_I_REG;
 	uint8_t who_am_i = 0;
 
-ESP_ERROR_CHECK(i2c_master_transmit_receive(dev_handle, &Who_am_i_reg, 1, &who_am_i, 1, -1));
+	ESP_ERROR_CHECK(i2c_master_transmit_receive(dev_handle, &Who_am_i_reg, 1, &who_am_i, 1, -1));
 	ESP_LOGI("MPU6050", "who_am_i = 0x%X", who_am_i);
+
+
+	// Set sample rate divider, digital low pass filter, and full scale ranges for gyro and accelerometer
+
+	sendData(&dev_handle ,SMPLRT_DIV_REG, 0x07); // sample rate divider
+	
+	sendData(&dev_handle ,CONFIG_REG, 0x03); // digital low pass filter
+
+	sendData(&dev_handle, GYRO_CONFIG_REG, 0x00); // Gyro full scale range
+
+	sendData(&dev_handle, ACCEL_CONFIG_REG, 0x00); // Accel full scale range
+
+	while(1){
+	
+		uint8_t sensor_data[14];  // accelX, accelY, accelZ, temp, gyroX, gyroY, gyroZ
+
+		uint8_t reg_addr = 0x3B;
+		ESP_ERROR_CHECK(i2c_master_transmit_receive(dev_handle, &reg_addr, 1, sensor_data, 14, -1));
+
+		// Parse the raw values
+		int16_t accel_x = (sensor_data[0] << 8) | sensor_data[1];
+		int16_t accel_y = (sensor_data[2] << 8) | sensor_data[3];
+		int16_t accel_z = (sensor_data[4] << 8) | sensor_data[5];
+
+		int16_t temp_raw = (sensor_data[6] << 8) | sensor_data[7];
+
+		int16_t gyro_x = (sensor_data[8]  << 8) | sensor_data[9];
+		int16_t gyro_y = (sensor_data[10] << 8) | sensor_data[11];
+		int16_t gyro_z = (sensor_data[12] << 8) | sensor_data[13];
+
+		ESP_LOGI("MPU6050", "Accel: X=%d, Y=%d, Z=%d", accel_x, accel_y, accel_z);
+		ESP_LOGI("MPU6050", "Gyro:  X=%d, Y=%d, Z=%d", gyro_x, gyro_y, gyro_z);
+
+
+	}
 }
+
