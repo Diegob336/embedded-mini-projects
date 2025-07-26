@@ -25,6 +25,7 @@ void sendData(i2c_master_dev_handle_t *dev_handle, uint8_t addr, uint8_t val){
 }
 
 
+
 void handleData( void *parameter) {
 	
 	while(1){
@@ -53,11 +54,15 @@ void handleData( void *parameter) {
 		float ang_velocity_y = (float)raw_gyro_y / LSB_PER_DEG;
 		float ang_velocity_z = (float)raw_gyro_z / LSB_PER_DEG;
 
-		ESP_LOGI("MPU6050", "Accel: X=%f, Y=%f, Z=%f", g_force_x, g_force_y, g_force_z);
-		ESP_LOGI("MPU6050", "Gyro:  X=%f, Y=%f, Z=%f", ang_velocity_x, ang_velocity_y, ang_velocity_z);
+		//ESP_LOGI("MPU6050", "Accel: X=%f, Y=%f, Z=%f", g_force_x, g_force_y, g_force_z);
+		//ESP_LOGI("MPU6050", "Gyro:  X=%f, Y=%f, Z=%f", ang_velocity_x, ang_velocity_y, ang_velocity_z);
 
-		
-				
+
+		float roll  = atan2f(g_force_y, g_force_z) * 180.0f / 3.14159;
+		float pitch = atan2f(-g_force_x, sqrtf(g_force_y * g_force_y + g_force_z * g_force_z)) * 180.0f / 3.14159;
+ 		
+		ESP_LOGI("MPU6050", "Roll:%f  Pitch: %f", roll, pitch);		
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 
 
